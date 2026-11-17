@@ -1,0 +1,1322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BillTrack — Scan bills, track every rupee</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #faf9fc; color: #1e1035; }
+      .font-mono-tabular { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; font-variant-numeric: tabular-nums; }
+      .hero-bg { background: radial-gradient(1200px 500px at 0% 0%, #4c1d95 0%, transparent 60%), radial-gradient(800px 400px at 100% 100%, #5b21b6 0%, transparent 55%), #22103f; }
+    </style>
+  </head>
+  <body class="bg-[#FAF9FC] text-[#1E1035] antialiased selection:bg-[#FEF08A] selection:text-[#2D1654]">
+
+    <!-- ================= WELCOME / SIGN-IN ================= -->
+    <div id="authOverlay" style="display:none" class="hero-bg fixed inset-0 z-[60] overflow-y-auto">
+      <div class="mx-auto grid min-h-full max-w-6xl items-center gap-8 px-5 py-8 lg:grid-cols-2 lg:gap-16">
+        <div class="text-white">
+          <div class="flex items-center gap-3">
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FACC15] text-lg font-extrabold text-[#22103F]">B</span>
+            <span class="text-xl font-extrabold tracking-tight">BillTrack</span>
+          </div>
+          <h1 class="mt-8 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+            Welcome to <span class="text-[#FACC15]">BillTrack</span>
+          </h1>
+          <p class="mt-4 max-w-lg text-base leading-relaxed text-[#DDD6FE] sm:text-lg">
+            Snap a photo of any bill. We read the shop, date, time and amount for you, so you can track every rupee by day, week and month.
+          </p>
+          <ul class="mt-7 space-y-3.5 text-sm text-[#EDE9FE] sm:text-base">
+            <li class="flex items-start gap-3"><span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FACC15] text-xs font-bold text-[#22103F]">✓</span><span><b class="text-white">Scan in seconds.</b> Camera or gallery, details fill in automatically.</span></li>
+            <li class="flex items-start gap-3"><span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FACC15] text-xs font-bold text-[#22103F]">✓</span><span><b class="text-white">Track spending.</b> See bills and totals per day, week and month.</span></li>
+            <li class="flex items-start gap-3"><span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FACC15] text-xs font-bold text-[#22103F]">✓</span><span><b class="text-white">Share and export.</b> Send any bill's details to another app, or take them to Google Sheets.</span></li>
+            <li class="flex items-start gap-3"><span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FACC15] text-xs font-bold text-[#22103F]">✓</span><span><b class="text-white">Private to you.</b> Your bills are linked only to your email.</span></li>
+          </ul>
+        </div>
+
+        <div class="w-full rounded-2xl bg-white p-6 shadow-2xl sm:p-8 lg:max-w-md lg:justify-self-end">
+          <p class="text-xs font-bold uppercase tracking-wider text-[#5B21B6]">Get started</p>
+          <h2 id="authTitle" class="mt-1 text-2xl font-extrabold text-[#22103F]">Sign in to BillTrack</h2>
+          <p id="authSub" class="mt-2 text-sm text-[#6B5B8C]">Enter your name and email. We will send you a 6-digit sign-in code.</p>
+
+          <form id="authEmailForm" class="mt-6" novalidate>
+            <label for="authName" class="mb-1.5 block text-sm font-semibold text-[#22103F]">Your name</label>
+            <input id="authName" type="text" autocomplete="name" maxlength="60" placeholder="e.g. Ramesh Kumar"
+              class="min-h-[44px] w-full rounded-lg border border-[#DDD6FE] px-3 py-2 text-sm outline-none focus:border-[#5B21B6] focus:ring-2 focus:ring-[#DDD6FE]" />
+            <label for="authEmail" class="mb-1.5 mt-4 block text-sm font-semibold text-[#22103F]">Email address</label>
+            <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"
+              class="min-h-[44px] w-full rounded-lg border border-[#DDD6FE] px-3 py-2 text-sm outline-none focus:border-[#5B21B6] focus:ring-2 focus:ring-[#DDD6FE]" />
+            <button id="authSendBtn" type="submit"
+              class="mt-5 min-h-[46px] w-full rounded-lg bg-[#FACC15] px-4 py-2 text-sm font-bold text-[#22103F] hover:bg-[#EAB308] disabled:opacity-60">
+              Send sign-in code
+            </button>
+          </form>
+
+          <form id="authCodeForm" style="display:none" class="mt-6" novalidate>
+            <label for="authCode" class="mb-1.5 block text-sm font-semibold text-[#22103F]">6-digit code</label>
+            <input id="authCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"
+              class="font-mono-tabular min-h-[48px] w-full rounded-lg border border-[#DDD6FE] px-3 py-2 text-center text-xl tracking-[0.4em] outline-none focus:border-[#5B21B6] focus:ring-2 focus:ring-[#DDD6FE]" />
+            <button id="authVerifyBtn" type="submit"
+              class="mt-4 min-h-[46px] w-full rounded-lg bg-[#5B21B6] px-4 py-2 text-sm font-bold text-white hover:bg-[#4C1D95] disabled:opacity-60">
+              Verify &amp; sign in
+            </button>
+            <div class="mt-3 flex items-center justify-between text-sm">
+              <button id="authBackBtn" type="button" class="font-medium text-[#5B21B6] hover:underline">Change email</button>
+              <button id="authResendBtn" type="button" class="font-medium text-[#5B21B6] hover:underline disabled:text-[#9CA3AF] disabled:no-underline">Resend code</button>
+            </div>
+          </form>
+
+          <p id="authMsg" class="mt-4 hidden rounded-lg px-3 py-2 text-sm"></p>
+          <p class="mt-6 text-xs text-[#8B7BAA]">No password needed. Use the same email next time to see your bills again.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= APP ================= -->
+    <div id="appShell" style="display:none">
+      <!-- mobile top bar -->
+      <div class="sticky top-0 z-30 flex items-center justify-between bg-[#22103F] px-4 py-3 md:hidden">
+        <button id="menuBtn" type="button" aria-label="Open menu" class="flex h-10 w-10 items-center justify-center rounded-lg text-white hover:bg-[#381C66]">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <span class="text-base font-extrabold tracking-tight text-white">BillTrack</span>
+        <span class="w-10"></span>
+      </div>
+
+      <div id="sidebarBackdrop" class="fixed inset-0 z-30 hidden bg-[#180B2E]/60 md:hidden"></div>
+
+      <!-- sidebar -->
+      <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col bg-[#22103F] text-[#DDD6FE] transition-transform duration-200 md:translate-x-0">
+        <div class="flex items-center gap-2.5 px-5 py-5">
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FACC15] text-base font-extrabold text-[#22103F]">B</span>
+          <span class="text-lg font-extrabold tracking-tight text-white">BillTrack</span>
+        </div>
+        <nav class="flex-1 space-y-1 px-3 py-2">
+          <button type="button" data-view="upload" class="navItem flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>
+            Upload Bill
+          </button>
+          <button type="button" data-view="tracking" class="navItem flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            Tracking
+          </button>
+          <button type="button" data-view="sheet" class="navItem flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg>
+            Google Sheet
+          </button>
+        </nav>
+        <div class="border-t border-[#381C66] p-4">
+          <div class="flex items-center gap-3">
+            <span id="userInitial" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FACC15] text-sm font-extrabold text-[#22103F]">U</span>
+            <div class="min-w-0">
+              <p id="userName" class="truncate text-sm font-bold text-white"></p>
+              <p id="userEmail" class="truncate text-xs text-[#C4B5FD]"></p>
+            </div>
+          </div>
+          <button id="signOutBtn" type="button" class="mt-3 min-h-[40px] w-full rounded-lg border border-[#5B3A99] px-3 py-2 text-xs font-semibold text-[#DDD6FE] transition-colors hover:bg-[#381C66]">Sign out</button>
+        </div>
+      </aside>
+
+      <main class="px-4 py-6 sm:px-6 sm:py-8 md:pl-72 md:pr-8">
+        <div class="mx-auto max-w-5xl">
+
+          <!-- ===== VIEW: UPLOAD ===== -->
+          <section id="viewUpload" class="space-y-0">
+            <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-[#1E1035] sm:text-3xl">Upload a bill</h1>
+                <p class="mt-1.5 max-w-2xl text-sm text-[#5B526E]">
+                  Take a photo or pick one from your gallery. Shop, date, time and amount are filled in automatically. Add your spending reason and submit.
+                </p>
+              </div>
+              <button id="resetBtn" type="button" class="hidden inline-flex min-h-[40px] items-center gap-2 self-start rounded-lg border border-[#D8CEF0] bg-white px-4 py-2 text-sm font-medium text-[#3B2863] transition-colors hover:bg-[#F5F2FC] whitespace-nowrap shrink-0">
+                Clear &amp; Scan New
+              </button>
+            </div>
+
+            <div id="savedNotice" role="status" class="hidden mb-5 items-center justify-between gap-3 rounded-xl border border-[#16A34A]/30 bg-[#F0FDF4] px-4 py-4 text-sm text-[#166534]">
+              <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#16A34A] text-base font-bold text-white">✓</span>
+                <div>
+                  <p class="text-base font-bold">Successfully submitted!</p>
+                  <p id="savedNoticeText" class="text-xs"></p>
+                </div>
+              </div>
+              <button id="dismissNoticeBtn" type="button" class="shrink-0 text-xs font-semibold underline">Dismiss</button>
+            </div>
+            <input id="fileInput" type="file" accept="image/*" class="hidden" aria-label="Upload bill photo from gallery" />
+        <input id="nativeCameraInput" type="file" accept="image/*" capture="environment" class="hidden" aria-label="Capture bill photo with device camera" />
+
+        <div class="grid items-stretch gap-6 lg:grid-cols-12">
+          <div class="flex flex-col rounded-xl border border-[#E6DFF3] bg-white p-5 lg:col-span-5">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-sm font-semibold text-[#1E1035]">1. Receipt Photo</h2>
+              <span class="text-xs text-[#5B526E]">Camera or Gallery</span>
+            </div>
+
+            <div
+              id="dropZone"
+              class="flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#D8CEF0] bg-[#FAF9FC] p-6 text-center transition-colors hover:border-[#7C3AED]"
+            >
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EDE8F8] text-[#5B21B6] font-bold">
+                OCR
+              </div>
+              <p class="mt-4 text-sm font-semibold text-[#1E1035]">Drop your bill photo here</p>
+              <p class="mt-1 max-w-xs text-xs leading-relaxed text-[#5B526E]">
+                Supports JPG, PNG, and mobile receipt photos. Scanning begins automatically upon upload.
+              </p>
+
+              <div class="mt-6 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+                <button
+                  id="openCameraBtn"
+                  type="button"
+                  class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#5B21B6] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4C1D95] whitespace-nowrap shrink-0"
+                >
+                  Use Camera
+                </button>
+                <button
+                  id="chooseGalleryBtn"
+                  type="button"
+                  class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#FACC15] px-5 py-2.5 text-sm font-semibold text-[#22103F] transition-colors hover:bg-[#EAB308] whitespace-nowrap shrink-0"
+                >
+                  From Gallery
+                </button>
+              </div>
+            </div>
+
+            <div id="previewContainer" class="hidden flex-1 flex-col gap-4">
+              <div class="relative flex min-h-[300px] flex-1 items-center justify-center overflow-hidden rounded-xl border border-[#E6DFF3] bg-[#180B2E]">
+                <img id="previewImg" alt="Uploaded bill preview" class="max-h-[380px] w-full object-contain" />
+                <div
+                  id="scanningOverlay"
+                  class="hidden absolute inset-0 flex-col items-center justify-center gap-2 bg-[#180B2E]/80 px-4 text-center"
+                >
+                  <div class="h-8 w-8 animate-spin rounded-full border-4 border-[#FACC15] border-t-transparent"></div>
+                  <p class="text-sm font-semibold text-white">Scanning receipt...</p>
+                  <p class="text-xs text-[#DDD6FE]">Reading shop name, date, time and grand total</p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2.5">
+                <button
+                  id="retakePhotoBtn"
+                  type="button"
+                  class="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg border border-[#D8CEF0] bg-white px-4 py-2 text-xs font-semibold text-[#3B2863] hover:bg-[#F5F2FC]"
+                >
+                  Retake Photo
+                </button>
+                <button
+                  id="chooseAnotherBtn"
+                  type="button"
+                  class="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg border border-[#D8CEF0] bg-white px-4 py-2 text-xs font-semibold text-[#3B2863] hover:bg-[#F5F2FC]"
+                >
+                  Choose Another
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="scanErrorBox"
+              role="alert"
+              class="hidden mt-4 flex items-center justify-between gap-3 rounded-lg border border-[#DC2626]/30 bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#991B1B]"
+            >
+              <span id="scanErrorText"></span>
+              <button id="retryScanBtn" type="button" class="font-semibold underline shrink-0">Retry Scan</button>
+            </div>
+          </div>
+
+          <form id="billForm" class="flex flex-col justify-between rounded-xl border border-[#E6DFF3] bg-white p-5 lg:col-span-7">
+            <div>
+              <div class="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-[#EDE8F8] pb-3.5">
+                <div>
+                  <h2 class="text-sm font-semibold text-[#1E1035]">2. Auto-Scanned Details &amp; Spending Reason</h2>
+                  <p id="scanStatusText" class="mt-0.5 text-xs text-[#5B526E]">
+                    Upload or capture a bill photo to auto-fill all receipt fields
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="shopName" class="block text-xs font-semibold text-[#3B2863]">Shop / Company Name</label>
+                  <input
+                    id="shopName"
+                    type="text"
+                    placeholder="e.g. Reliance Smart / ABC Traders"
+                    class="mt-1.5 min-h-[42px] w-full rounded-lg border border-[#D8CEF0] bg-[#FAF9FC] px-3.5 py-2 text-sm font-medium text-[#1E1035] focus:border-[#5B21B6] focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between gap-2">
+                    <label for="billDate" class="block text-xs font-semibold text-[#3B2863]">Bill Date (Purchase Date)</label>
+                    <span id="rawDateBadge" class="hidden font-mono-tabular text-[11px] text-[#5B526E]"></span>
+                  </div>
+                  <input
+                    id="billDate"
+                    type="date"
+                    class="font-mono-tabular mt-1.5 min-h-[42px] w-full rounded-lg border border-[#D8CEF0] bg-[#FAF9FC] px-3.5 py-2 text-sm font-medium text-[#1E1035] focus:border-[#5B21B6] focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between gap-2">
+                    <label for="billTime" class="block text-xs font-semibold text-[#3B2863]">Bill Time (IST)</label>
+                  </div>
+                  <input
+                    id="billTime"
+                    type="time"
+                    class="font-mono-tabular mt-1.5 min-h-[42px] w-full rounded-lg border border-[#D8CEF0] bg-[#FAF9FC] px-3.5 py-2 text-sm font-medium text-[#1E1035] focus:border-[#5B21B6] focus:bg-white focus:outline-none"
+                  />
+                  <p id="timeNote" class="mt-1 hidden text-[11px] text-[#713F12]"></p>
+                </div>
+
+                <div>
+                  <label for="uploadedDate" class="block text-xs font-semibold text-[#3B2863]">Uploaded Date</label>
+                  <input
+                    id="uploadedDate"
+                    type="date"
+                    class="font-mono-tabular mt-1.5 min-h-[42px] w-full rounded-lg border border-[#D8CEF0] bg-[#F5F2FC] px-3.5 py-2 text-sm font-medium text-[#4C1D95] focus:border-[#5B21B6] focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label for="totalAmount" class="block text-xs font-semibold text-[#3B2863]">Total Amount</label>
+                  <div class="mt-1.5 flex overflow-hidden rounded-lg border border-[#D8CEF0] bg-[#FAF9FC] focus-within:border-[#5B21B6] focus-within:bg-white">
+                    <select
+                      id="currency"
+                      aria-label="Currency"
+                      class="border-r border-[#D8CEF0] bg-[#EDE8F8] px-3 py-2 text-sm font-semibold text-[#3B2863] focus:outline-none"
+                    >
+                      <option value="₹">₹</option>
+                      <option value="$">$</option>
+                      <option value="€">€</option>
+                      <option value="£">£</option>
+                    </select>
+                    <input
+                      id="totalAmount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      class="font-mono-tabular min-h-[42px] w-full bg-transparent px-3.5 py-2 text-base font-bold text-[#4C1D95] focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 rounded-xl border border-[#EAB308]/50 bg-[#FEFCE8] p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <label for="spendingReason" class="text-sm font-bold text-[#22103F]">Spending Reason</label>
+                  <span class="text-xs text-[#713F12]">Required before saving to Google Sheet</span>
+                </div>
+
+                <textarea
+                  id="spendingReason"
+                  rows="2"
+                  placeholder="Type why you spent this amount (e.g. Monthly groceries, Client lunch, Printer paper)..."
+                  class="mt-2 w-full rounded-lg border border-[#EAB308]/60 bg-white px-3.5 py-2.5 text-sm text-[#1E1035] focus:border-[#5B21B6] focus:outline-none"
+                ></textarea>
+
+                <div id="quickReasons" class="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <button
+                    id="suggestedReasonBtn"
+                    type="button"
+                    class="hidden rounded-md border border-[#5B21B6]/30 bg-[#EDE8F8] px-2.5 py-1 text-xs font-semibold text-[#4C1D95] hover:bg-[#DDD6FE]"
+                  ></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-5 flex flex-col gap-3 border-t border-[#EDE8F8] pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="min-h-[20px] text-xs">
+                <span id="saveErrorText" class="hidden font-medium text-[#DC2626]"></span>
+                <span id="saveHelperText" class="text-[#5B526E]">Saves receipt photo, dates, amount, and reason to Google Sheets.</span>
+              </div>
+
+              <button
+                id="submitBtn"
+                type="submit"
+                class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#5B21B6] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4C1D95] disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap shrink-0"
+              >
+                Submit &amp; Save Bill
+              </button>
+            </div>
+          </form>
+        </div>
+
+            <div class="mt-8">
+              <p class="mb-3 text-xs font-bold uppercase tracking-wider text-[#5B21B6]">What next?</p>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <button type="button" data-view="tracking" class="group flex items-center justify-between gap-4 rounded-xl border border-[#E6DFF3] bg-white p-5 text-left transition-colors hover:border-[#7C3AED]">
+                  <span>
+                    <span class="block text-base font-bold text-[#22103F]">Tracking</span>
+                    <span class="mt-1 block text-xs text-[#5B526E]">See your bills and totals by day, week and month.</span>
+                  </span>
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#5B21B6] text-white">→</span>
+                </button>
+                <button type="button" data-view="sheet" class="group flex items-center justify-between gap-4 rounded-xl border border-[#EAB308]/50 bg-[#FEFCE8] p-5 text-left transition-colors hover:border-[#EAB308]">
+                  <span>
+                    <span class="block text-base font-bold text-[#22103F]">Google Sheet</span>
+                    <span class="mt-1 block text-xs text-[#713F12]">Download or copy your bills for Google Sheets.</span>
+                  </span>
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FACC15] font-bold text-[#22103F]">→</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== VIEW: TRACKING ===== -->
+          <section id="viewTracking" class="hidden space-y-6">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-[#1E1035] sm:text-3xl">Tracking</h1>
+                <p class="mt-1.5 text-sm text-[#5B526E]">Your bills grouped by day, week or month. Tap a bill to see everything.</p>
+              </div>
+              <button id="refreshBillsBtn" type="button" class="inline-flex min-h-[40px] items-center rounded-lg border border-[#D8CEF0] bg-white px-4 py-2 text-sm font-medium text-[#3B2863] hover:bg-[#F5F2FC]">Refresh</button>
+            </div>
+
+            <div class="inline-flex rounded-xl bg-[#EDE8F8] p-1" role="tablist">
+              <button id="tabDay" type="button" data-mode="day" class="trackTab min-h-[40px] rounded-lg px-5 py-2 text-sm font-bold">Day</button>
+              <button id="tabWeek" type="button" data-mode="week" class="trackTab min-h-[40px] rounded-lg px-5 py-2 text-sm font-bold">Week</button>
+              <button id="tabMonth" type="button" data-mode="month" class="trackTab min-h-[40px] rounded-lg px-5 py-2 text-sm font-bold">Month</button>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+              <div class="rounded-xl border border-[#E6DFF3] bg-white p-4">
+                <p id="kpiPeriodLabel" class="text-xs font-semibold text-[#5B526E]">Days with bills</p>
+                <p id="kpiPeriods" class="font-mono-tabular mt-1 text-2xl font-extrabold text-[#22103F]">0</p>
+              </div>
+              <div class="rounded-xl border border-[#E6DFF3] bg-white p-4">
+                <p class="text-xs font-semibold text-[#5B526E]">Total bills</p>
+                <p id="kpiBills" class="font-mono-tabular mt-1 text-2xl font-extrabold text-[#22103F]">0</p>
+              </div>
+              <div class="rounded-xl border border-[#EAB308]/50 bg-[#FEFCE8] p-4">
+                <p class="text-xs font-semibold text-[#713F12]">Total amount</p>
+                <p id="kpiTotal" class="font-mono-tabular mt-1 text-2xl font-extrabold text-[#4C1D95]">₹0.00</p>
+              </div>
+            </div>
+
+            <div id="trackList" class="space-y-4"></div>
+          </section>
+
+          <!-- ===== VIEW: GOOGLE SHEET ===== -->
+          <section id="viewSheet" class="hidden space-y-6">
+            <div>
+              <h1 class="text-2xl font-extrabold tracking-tight text-[#1E1035] sm:text-3xl">Google Sheet</h1>
+              <p class="mt-1.5 max-w-2xl text-sm text-[#5B526E]">Take your own bills into Google Sheets. Only your bills are included.</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="rounded-xl border border-[#E6DFF3] bg-white p-5">
+                <h2 class="text-base font-bold text-[#22103F]">Download as CSV</h2>
+                <p class="mt-1 text-xs text-[#5B526E]">Opens in Google Sheets (File → Import) or Excel.</p>
+                <button id="sheetCsvBtn" type="button" class="mt-4 min-h-[44px] w-full rounded-lg bg-[#5B21B6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4C1D95]">Download CSV</button>
+              </div>
+              <div class="rounded-xl border border-[#EAB308]/50 bg-[#FEFCE8] p-5">
+                <h2 class="text-base font-bold text-[#22103F]">Copy for Google Sheets</h2>
+                <p class="mt-1 text-xs text-[#713F12]">Copies all rows. Open a Google Sheet and paste.</p>
+                <button id="sheetCopyBtn" type="button" class="mt-4 min-h-[44px] w-full rounded-lg bg-[#FACC15] px-4 py-2 text-sm font-bold text-[#22103F] hover:bg-[#EAB308]">Copy to clipboard</button>
+              </div>
+            </div>
+            <div id="sheetAdminCard" class="hidden rounded-xl border border-[#E6DFF3] bg-white p-5">
+              <h2 class="text-base font-bold text-[#22103F]">Master Google Sheet (admin)</h2>
+              <p class="mt-1 text-xs text-[#5B526E]">The sheet where all users' bills are stored.</p>
+              <button id="sheetOpenBtn" type="button" class="mt-4 min-h-[44px] rounded-lg bg-[#22103F] px-5 py-2 text-sm font-semibold text-white hover:bg-[#381C66]">Open master sheet</button>
+            </div>
+            <p id="sheetMsg" class="hidden rounded-lg bg-[#F3E8FF] px-3 py-2 text-sm text-[#5B21B6]"></p>
+          </section>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- ===== BILL DETAIL MODAL ===== -->
+    <div id="billModal" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-[#180B2E]/75 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true">
+      <div class="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
+        <div class="flex items-center justify-between border-b border-[#EDE8F8] px-5 py-4">
+          <h3 class="text-base font-extrabold text-[#22103F]">Bill details</h3>
+          <button id="bmClose" type="button" aria-label="Close" class="flex h-9 w-9 items-center justify-center rounded-lg text-[#5B526E] hover:bg-[#F5F2FC]">✕</button>
+        </div>
+        <div class="space-y-4 p-5">
+          <img id="bmImage" alt="Bill photo" class="hidden max-h-64 w-full rounded-xl border border-[#E6DFF3] bg-[#180B2E] object-contain" />
+          <div>
+            <p id="bmShop" class="text-lg font-extrabold text-[#1E1035]"></p>
+            <p id="bmAmount" class="font-mono-tabular mt-1 text-2xl font-extrabold text-[#4C1D95]"></p>
+          </div>
+          <dl class="grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-lg bg-[#FAF5FF] p-3"><dt class="text-xs font-semibold text-[#5B526E]">Bill date</dt><dd id="bmDate" class="mt-0.5 font-semibold text-[#22103F]"></dd></div>
+            <div class="rounded-lg bg-[#FAF5FF] p-3"><dt class="text-xs font-semibold text-[#5B526E]">Bill time (IST)</dt><dd id="bmTime" class="mt-0.5 font-semibold text-[#22103F]"></dd></div>
+            <div class="col-span-2 rounded-lg bg-[#FAF5FF] p-3"><dt class="text-xs font-semibold text-[#5B526E]">Uploaded on</dt><dd id="bmUploaded" class="mt-0.5 font-semibold text-[#22103F]"></dd></div>
+          </dl>
+          <div class="rounded-xl border border-[#EAB308]/50 bg-[#FEFCE8] p-3">
+            <label for="bmReason" class="text-xs font-bold text-[#22103F]">Spending reason</label>
+            <div class="mt-1.5 flex gap-2">
+              <input id="bmReason" type="text" class="min-h-[40px] min-w-0 flex-1 rounded-lg border border-[#EAB308]/60 bg-white px-3 py-2 text-sm focus:border-[#5B21B6] focus:outline-none" />
+              <button id="bmSaveReason" type="button" class="min-h-[40px] shrink-0 rounded-lg bg-[#5B21B6] px-3 py-2 text-xs font-semibold text-white hover:bg-[#4C1D95]">Update</button>
+            </div>
+          </div>
+          <p id="bmMsg" class="hidden rounded-lg bg-[#F3E8FF] px-3 py-2 text-xs text-[#5B21B6]"></p>
+
+          <div id="bmConfirm" class="hidden rounded-xl border border-[#DC2626]/30 bg-[#FEF2F2] p-3 text-sm text-[#991B1B]">
+            <p class="font-semibold">Delete this bill permanently?</p>
+            <div class="mt-2 flex gap-2">
+              <button id="bmConfirmYes" type="button" class="min-h-[40px] flex-1 rounded-lg bg-[#DC2626] px-3 py-2 text-xs font-bold text-white hover:bg-[#B91C1C]">Yes, delete</button>
+              <button id="bmConfirmNo" type="button" class="min-h-[40px] flex-1 rounded-lg border border-[#D8CEF0] bg-white px-3 py-2 text-xs font-semibold text-[#3B2863]">Cancel</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <button id="bmShare" type="button" class="min-h-[44px] rounded-lg bg-[#FACC15] px-3 py-2 text-sm font-bold text-[#22103F] hover:bg-[#EAB308]">Share</button>
+            <button id="bmDownload" type="button" class="min-h-[44px] rounded-lg bg-[#5B21B6] px-3 py-2 text-sm font-semibold text-white hover:bg-[#4C1D95]">Download</button>
+            <button id="bmDelete" type="button" class="min-h-[44px] rounded-lg border border-[#DC2626]/40 bg-white px-3 py-2 text-sm font-semibold text-[#DC2626] hover:bg-[#FEF2F2]">Delete</button>
+          </div>
+          <a id="bmOpenPhoto" href="#" target="_blank" rel="noopener" class="hidden block text-center text-xs font-semibold text-[#5B21B6] underline">Open full bill photo</a>
+        </div>
+      </div>
+    </div>
+    <div id="cameraModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-[#180B2E]/75 p-4" role="dialog" aria-modal="true">
+      <div class="w-full max-w-xl overflow-hidden rounded-xl border border-[#D8CEF0] bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-[#EDE8F8] px-5 py-4">
+          <div>
+            <h2 class="text-base font-semibold text-[#1E1035]">Capture Bill Photo</h2>
+            <p class="text-xs text-[#5B526E]">Hold the receipt flat and well-lit so shop name, date, and total are sharp.</p>
+          </div>
+          <button id="closeCameraBtn" type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-[#5B526E] hover:bg-[#F5F2FC]">Close</button>
+        </div>
+        <div class="bg-[#140928] p-4">
+          <video id="cameraVideo" autoplay playsinline muted class="aspect-[4/3] w-full rounded-lg bg-black object-cover"></video>
+          <p id="cameraErrorText" class="hidden mt-3 text-center text-xs text-[#FCA5A5]"></p>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2.5 border-t border-[#EDE8F8] px-5 py-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="switchCameraBtn" type="button" class="min-h-[40px] rounded-lg border border-[#D8CEF0] px-3.5 py-2 text-xs font-semibold text-[#3B2863] hover:bg-[#F5F2FC]">
+              Switch Camera
+            </button>
+            <button id="deviceCameraBtn" type="button" class="min-h-[40px] rounded-lg border border-[#D8CEF0] bg-[#FAF9FC] px-3.5 py-2 text-xs font-semibold text-[#3B2863] hover:bg-[#F5F2FC]">
+              Device Camera
+            </button>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <button id="cancelCameraBtn" type="button" class="min-h-[40px] rounded-lg px-4 py-2 text-sm font-medium text-[#5B526E] hover:bg-[#F5F2FC]">Cancel</button>
+            <button id="snapCameraBtn" type="button" class="min-h-[40px] rounded-lg bg-[#5B21B6] px-5 py-2 text-sm font-semibold text-white hover:bg-[#4C1D95] disabled:opacity-50">
+              Capture &amp; Scan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+
+        const APPS_SCRIPT_URL =
+          'https://script.google.com/macros/s/AKfycbz_1m9gOM78d866wH1L1LxifkSUsw8iG6kNWYcNX1ynKJPAvzUtK8WqkcM8dfjkrGReYA/exec';
+
+        // Admin only: உங்க இமெயில் (சின்ன எழுத்தில்) + உங்க Google Sheet URL இங்க போடுங்க.
+        // ரெண்டும் match ஆனா மட்டும் "Open master sheet" பட்டன் உங்களுக்கு தெரியும்.
+        const ADMIN_EMAIL = '';
+        const MASTER_SHEET_URL = '';
+
+        const QUICK_REASONS = ['Groceries', 'Dining & Food', 'Travel & Fuel', 'Medical', 'Utilities', 'Office Supplies'];
+
+        const state = {
+          bills: [],
+          isLoading: true,
+          loadError: null,
+          previewUrl: null,
+          imageMimeType: 'image/jpeg',
+          isScanning: false,
+          cameraStream: null,
+          facingMode: 'environment',
+          view: 'upload',
+          trackMode: 'day',
+          openGroups: {},
+          activeBill: null,
+        };
+
+        const el = (id) => document.getElementById(id);
+
+        const SESSION_KEY = 'billtrack_session_v1';
+        function readSession() {
+          try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; }
+        }
+        function saveSession(v) {
+          try { if (v) localStorage.setItem(SESSION_KEY, JSON.stringify(v)); else localStorage.removeItem(SESSION_KEY); } catch (e) {}
+        }
+        let session = readSession();
+        if (session && session.expiresAt && Date.now() > session.expiresAt) { saveSession(null); session = null; }
+        function forceSignOut() { saveSession(null); location.reload(); }
+
+        /* ---------- Indian Standard Time helpers (device timezone-ஐ பொருட்படுத்தாது) ---------- */
+        function istParts(d) {
+          const f = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false,
+          });
+          const p = {};
+          f.formatToParts(d || new Date()).forEach((x) => { p[x.type] = x.value; });
+          const hh = p.hour === '24' ? '00' : p.hour;
+          return { date: p.year + '-' + p.month + '-' + p.day, time: hh + ':' + p.minute };
+        }
+        function todayString() { return istParts().date; }
+
+        function normalizeTime(val) {
+          const s = String(val || '').trim();
+          if (!s) return '';
+          const m = s.match(/(\d{1,2})[:.](\d{2})(?::\d{2})?\s*([AaPp][Mm])?/);
+          if (!m) return '';
+          let h = Number(m[1]); const mi = Number(m[2]);
+          if (m[3]) { const pm = m[3].toLowerCase() === 'pm'; if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
+          if (h > 23 || mi > 59) return '';
+          return String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0');
+        }
+        function fmtTime12(t) {
+          const n = normalizeTime(t);
+          if (!n) return '—';
+          let h = Number(n.slice(0, 2)); const m = n.slice(3);
+          const ap = h >= 12 ? 'PM' : 'AM';
+          h = h % 12 || 12;
+          return h + ':' + m + ' ' + ap;
+        }
+        function parseISO(iso) { const a = iso.split('-').map(Number); return new Date(Date.UTC(a[0], a[1] - 1, a[2])); }
+        function fmtDate(iso, withWeekday) {
+          if (!iso) return '—';
+          return parseISO(iso).toLocaleDateString('en-IN', Object.assign({ day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }, withWeekday ? { weekday: 'short' } : {}));
+        }
+        function fmtShort(iso) { return parseISO(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' }); }
+
+        function normalizeDateToISO(val) {
+          if (!val) return '';
+          const s = String(val).trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+          const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+          if (m) {
+            let first = Number(m[1]), second = Number(m[2]), year = m[3];
+            if (year.length === 2) year = Number(year) >= 70 ? '19' + year : '20' + year;
+            let day = first, month = second;
+            if (second > 12 && first <= 12) { month = first; day = second; }
+            if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+              return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            }
+          }
+          const parsed = new Date(s);
+          return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10);
+        }
+
+        function normalizeAmount(val) {
+          if (val === null || val === undefined) return '';
+          const cleaned = String(val).replace(/[^0-9.]/g, '');
+          const num = parseFloat(cleaned);
+          return Number.isFinite(num) ? num.toFixed(2) : '';
+        }
+
+        function normalizeCurrency(val) {
+          const s = String(val || '').trim().toUpperCase();
+          if (s.includes('USD') || s.includes('$')) return '$';
+          if (s.includes('EUR') || s.includes('€')) return '€';
+          if (s.includes('GBP') || s.includes('£')) return '£';
+          return '₹';
+        }
+
+        function formatMoney(amount, currency) {
+          return (currency || '₹') + Number(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function escapeHtml(str) {
+          return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+
+        async function callAppsScriptPost(payload, timeoutMs) {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), timeoutMs || 25000);
+          try {
+            const res = await fetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(Object.assign({ token: session ? session.token : '' }, payload)),
+              signal: controller.signal,
+            });
+            const text = await res.text();
+            let data;
+            try { data = JSON.parse(text); } catch (e) { throw new Error('Apps Script returned an invalid response. Ensure deployment access is set to Anyone.'); }
+            if (data.code === 'AUTH') { forceSignOut(); throw new Error(data.error || 'Please sign in again.'); }
+            if (!res.ok || data.error) throw new Error(data.error || 'Apps Script request failed.');
+            return data;
+          } catch (err) {
+            if (err && err.name === 'AbortError') throw new Error('Request timed out after ' + Math.round((timeoutMs || 25000) / 1000) + 's. Please try again.');
+            throw err;
+          } finally {
+            clearTimeout(timer);
+          }
+        }
+
+
+        function optimizeImage(source, maxLong, maxShort, quality) {
+          maxLong = maxLong || 2200; maxShort = maxShort || 1150; quality = quality || 0.8;
+          return new Promise((resolve, reject) => {
+            let objectUrl = null;
+            const img = new Image();
+            const cleanup = () => { if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; } };
+            img.onload = () => {
+              const w0 = img.naturalWidth || img.width;
+              const h0 = img.naturalHeight || img.height;
+              const shortSide = Math.min(w0, h0);
+              const longSide = Math.max(w0, h0);
+              let scale = 1;
+              if (shortSide > maxShort) scale = maxShort / shortSide;
+              if (longSide * scale > maxLong) scale = maxLong / longSide;
+              const w = Math.max(1, Math.round(w0 * scale));
+              const h = Math.max(1, Math.round(h0 * scale));
+              const canvas = document.createElement('canvas');
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) { cleanup(); return resolve({ dataUrl: typeof source === 'string' ? source : '', mimeType: 'image/jpeg' }); }
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, w, h);
+              if ('filter' in ctx) ctx.filter = 'contrast(1.08) brightness(1.02)';
+              ctx.drawImage(img, 0, 0, w, h);
+              const dataUrl = canvas.toDataURL('image/jpeg', quality);
+              cleanup();
+              resolve({ dataUrl, mimeType: 'image/jpeg' });
+            };
+            img.onerror = () => {
+              cleanup();
+              reject(new Error('Unsupported or unreadable image format. Use Camera or choose JPG/PNG.'));
+            };
+            if (typeof source === 'string') { img.src = source; }
+            else { objectUrl = URL.createObjectURL(source); img.src = objectUrl; }
+          });
+        }
+
+        function renderQuickReasons(suggested) {
+          const container = el('quickReasons');
+          const suggestedBtn = el('suggestedReasonBtn');
+          Array.from(container.querySelectorAll('.quick-chip')).forEach((n) => n.remove());
+          if (suggested) {
+            suggestedBtn.textContent = 'Use scanned suggestion: ' + suggested;
+            suggestedBtn.classList.remove('hidden');
+            suggestedBtn.onclick = () => { el('spendingReason').value = suggested; renderQuickReasons(suggested); };
+          } else {
+            suggestedBtn.classList.add('hidden');
+          }
+          const current = el('spendingReason').value;
+          QUICK_REASONS.forEach((reason) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = reason;
+            btn.className = 'quick-chip rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ' +
+              (current === reason ? 'border-[#5B21B6] bg-[#5B21B6] text-white' : 'border-[#EAB308]/40 bg-white text-[#422006] hover:bg-[#FEF08A]');
+            btn.onclick = () => { el('spendingReason').value = reason; renderQuickReasons(suggested); };
+            container.appendChild(btn);
+          });
+        }
+
+
+
+        function setTimeNote(fromUploader) {
+          const n = el('timeNote');
+          if (fromUploader) { n.textContent = 'No time on bill, so your upload time (IST) was used'; n.classList.remove('hidden'); }
+          else n.classList.add('hidden');
+        }
+
+        async function processAndScan(source) {
+          el('scanErrorBox').classList.add('hidden');
+          el('saveErrorText').classList.add('hidden');
+          el('saveHelperText').classList.remove('hidden');
+          el('savedNotice').classList.add('hidden');
+          el('uploadedDate').value = todayString();
+          state.isScanning = true;
+          el('submitBtn').disabled = true;
+          el('scanStatusText').textContent = 'Optimizing receipt and extracting fields...';
+
+          try {
+            const opt = await optimizeImage(source);
+            const small = await optimizeImage(source, 1100, 800, 0.7);
+            state.previewUrl = opt.dataUrl;
+            state.imageMimeType = opt.mimeType;
+            el('dropZone').classList.add('hidden');
+            el('previewContainer').classList.remove('hidden');
+            el('previewContainer').classList.add('flex');
+            el('resetBtn').classList.remove('hidden');
+            el('previewImg').src = opt.dataUrl;
+            el('scanningOverlay').classList.remove('hidden');
+            el('scanningOverlay').classList.add('flex');
+
+            const data = await callAppsScriptPost({
+              action: 'scanBill',
+              imageData: small.dataUrl,
+              mimeType: small.mimeType,
+            }, 40000);
+
+            const s = data.scanned || {};
+            el('shopName').value = s.shopName || '';
+            el('billDate').value = normalizeDateToISO(s.billDate);
+            if (s.rawDateText) {
+              el('rawDateBadge').textContent = 'Printed: ' + s.rawDateText;
+              el('rawDateBadge').classList.remove('hidden');
+            } else {
+              el('rawDateBadge').classList.add('hidden');
+            }
+            const t = normalizeTime(s.billTime);
+            if (t) { el('billTime').value = t; setTimeNote(false); }
+            el('totalAmount').value = normalizeAmount(s.totalAmount);
+            el('currency').value = normalizeCurrency(s.currency);
+            renderQuickReasons(s.suggestedReason || '');
+            el('scanStatusText').textContent = 'Scan verified · Review values and type your spending reason below';
+          } catch (err) {
+            el('scanErrorText').textContent = (err && err.message) || 'Scanning failed. Please retry or enter details manually.';
+            el('scanErrorBox').classList.remove('hidden');
+            el('scanStatusText').textContent = 'Enter details manually or click Retry Scan';
+          } finally {
+            // பில்லில் நேரம் இல்லன்னா uploader-ஓட IST நேரம் தானா வரும்
+            if (!el('billTime').value) { el('billTime').value = istParts().time; setTimeNote(true); }
+            state.isScanning = false;
+            el('submitBtn').disabled = false;
+            el('scanningOverlay').classList.add('hidden');
+            el('scanningOverlay').classList.remove('flex');
+          }
+        }
+
+        function resetForm() {
+          state.previewUrl = null;
+          el('dropZone').classList.remove('hidden');
+          el('previewContainer').classList.add('hidden');
+          el('previewContainer').classList.remove('flex');
+          el('resetBtn').classList.add('hidden');
+          el('scanErrorBox').classList.add('hidden');
+          el('saveErrorText').classList.add('hidden');
+          el('saveHelperText').classList.remove('hidden');
+          el('shopName').value = '';
+          el('billDate').value = '';
+          el('billTime').value = '';
+          setTimeNote(false);
+          el('rawDateBadge').classList.add('hidden');
+          el('uploadedDate').value = '';
+          el('totalAmount').value = '';
+          el('currency').value = '₹';
+          el('spendingReason').value = '';
+          el('scanStatusText').textContent = 'Upload or capture a bill photo to auto-fill all receipt fields';
+          renderQuickReasons('');
+        }
+
+
+        /* ---------- Tracking (Day / Week / Month) ---------- */
+        function billDateOf(b) {
+          return normalizeDateToISO(b.billDate) || normalizeDateToISO(b.uploadedDate) || todayString();
+        }
+        function mondayOf(iso) {
+          const d = parseISO(iso);
+          d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+          return d.toISOString().slice(0, 10);
+        }
+        function groupKeyOf(b, mode) {
+          const d = billDateOf(b);
+          if (mode === 'day') return d;
+          if (mode === 'week') return mondayOf(d);
+          return d.slice(0, 7);
+        }
+        function groupLabelOf(key, mode) {
+          if (mode === 'day') return fmtDate(key, true);
+          if (mode === 'week') {
+            const end = parseISO(key); end.setUTCDate(end.getUTCDate() + 6);
+            return 'Week: ' + fmtShort(key) + ' – ' + fmtDate(end.toISOString().slice(0, 10));
+          }
+          return parseISO(key + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        }
+        function sumBills(list) {
+          const total = list.reduce((a, b) => a + Number(b.totalAmount || 0), 0);
+          const cur = list.length && list.every((b) => (b.currency || '₹') === (list[0].currency || '₹')) ? (list[0].currency || '₹') : '₹';
+          return formatMoney(total, cur);
+        }
+
+        function renderTracking() {
+          const mode = state.trackMode;
+          document.querySelectorAll('.trackTab').forEach((t) => {
+            const on = t.dataset.mode === mode;
+            t.className = 'trackTab min-h-[40px] rounded-lg px-5 py-2 text-sm font-bold transition-colors ' +
+              (on ? 'bg-[#5B21B6] text-white shadow' : 'text-[#4C1D95] hover:bg-[#DDD6FE]');
+          });
+          el('kpiPeriodLabel').textContent = mode === 'day' ? 'Days with bills' : mode === 'week' ? 'Weeks with bills' : 'Months with bills';
+
+          const list = el('trackList');
+          if (state.isLoading) { list.innerHTML = '<div class="rounded-xl border border-[#E6DFF3] bg-white p-8 text-center text-sm text-[#5B526E]">Loading your bills...</div>'; return; }
+          if (state.loadError) {
+            list.innerHTML = '<div class="rounded-xl border border-[#DC2626]/30 bg-[#FEF2F2] p-6 text-sm text-[#991B1B]">' + escapeHtml(state.loadError) +
+              ' <button id="retryLoadBtn" type="button" class="ml-2 font-semibold underline">Retry</button></div>';
+            el('retryLoadBtn').onclick = loadBills;
+            return;
+          }
+
+          const groups = {};
+          state.bills.forEach((b) => {
+            const k = groupKeyOf(b, mode);
+            (groups[k] = groups[k] || []).push(b);
+          });
+          const keys = Object.keys(groups).sort().reverse();
+
+          el('kpiPeriods').textContent = String(keys.length);
+          el('kpiBills').textContent = String(state.bills.length);
+          el('kpiTotal').textContent = sumBills(state.bills);
+
+          if (!keys.length) {
+            list.innerHTML = '<div class="rounded-xl border border-dashed border-[#D8CEF0] bg-white p-10 text-center"><p class="text-sm font-semibold text-[#22103F]">No bills yet</p><p class="mt-1 text-xs text-[#5B526E]">Upload your first bill and it will appear here.</p><button type="button" data-view="upload" class="mt-4 min-h-[40px] rounded-lg bg-[#FACC15] px-5 py-2 text-sm font-bold text-[#22103F] hover:bg-[#EAB308]">Upload a bill</button></div>';
+            return;
+          }
+
+          list.innerHTML = keys.map((key, idx) => {
+            const bills = groups[key].slice().sort((a, b) => {
+              const da = billDateOf(a) + ' ' + (normalizeTime(a.billTime) || '00:00');
+              const db = billDateOf(b) + ' ' + (normalizeTime(b.billTime) || '00:00');
+              return da < db ? 1 : -1;
+            });
+            const gid = mode + ':' + key;
+            const open = state.openGroups[gid] === undefined ? idx === 0 : state.openGroups[gid];
+            const rows = open ? bills.map((b) => {
+              const when = (mode === 'day' ? '' : fmtShort(billDateOf(b)) + ' · ') + fmtTime12(b.billTime);
+              return '<button type="button" data-bill="' + escapeHtml(b.id) + '" class="flex w-full items-center justify-between gap-3 border-t border-[#EDE8F8] px-4 py-3 text-left hover:bg-[#FAF5FF]">' +
+                '<span class="min-w-0"><span class="block truncate text-sm font-semibold text-[#1E1035]">' + escapeHtml(b.shopName) + '</span>' +
+                '<span class="mt-0.5 block truncate text-xs text-[#5B526E]">' + escapeHtml(when) + ' · ' + escapeHtml(b.spendingReason) + '</span></span>' +
+                '<span class="font-mono-tabular shrink-0 text-sm font-bold text-[#4C1D95]">' + formatMoney(b.totalAmount, b.currency) + '</span></button>';
+            }).join('') : '';
+            return '<div class="overflow-hidden rounded-xl border border-[#E6DFF3] bg-white">' +
+              '<button type="button" data-toggle="' + escapeHtml(gid) + '" class="flex w-full items-center justify-between gap-3 bg-[#FAF5FF] px-4 py-3.5 text-left">' +
+              '<span><span class="block text-sm font-bold text-[#22103F]">' + escapeHtml(groupLabelOf(key, mode)) + '</span>' +
+              '<span class="block text-xs text-[#5B526E]">' + bills.length + (bills.length === 1 ? ' bill' : ' bills') + '</span></span>' +
+              '<span class="flex items-center gap-3"><span class="font-mono-tabular rounded-md bg-[#FACC15] px-2.5 py-1 text-sm font-bold text-[#22103F]">' + sumBills(bills) + '</span>' +
+              '<span class="text-xs text-[#5B21B6]">' + (open ? '▲' : '▼') + '</span></span></button>' + rows + '</div>';
+          }).join('');
+        }
+
+        async function loadBills() {
+          state.isLoading = true;
+          state.loadError = null;
+          renderTracking();
+          try {
+            const data = await callAppsScriptPost({ action: 'list' });
+            state.bills = Array.isArray(data.bills) ? data.bills : [];
+          } catch (err) {
+            state.loadError = err.message || 'Could not load your bills.';
+          } finally {
+            state.isLoading = false;
+            renderTracking();
+          }
+        }
+
+        /* ---------- bill detail: edit reason / delete / download / share ---------- */
+        function billText(b) {
+          const lines = [
+            'BillTrack bill',
+            'Shop: ' + (b.shopName || ''),
+            'Amount: ' + formatMoney(b.totalAmount, b.currency),
+            'Bill date: ' + fmtDate(billDateOf(b)),
+            'Bill time (IST): ' + fmtTime12(b.billTime),
+            'Uploaded on: ' + fmtDate(normalizeDateToISO(b.uploadedDate)),
+            'Reason: ' + (b.spendingReason || ''),
+          ];
+          if (b.imageUrl) lines.push('Photo: ' + b.imageUrl);
+          return lines.join('\n');
+        }
+        function bmNote(text) {
+          const m = el('bmMsg');
+          if (!text) { m.classList.add('hidden'); return; }
+          m.textContent = text; m.classList.remove('hidden');
+        }
+        function openBill(id) {
+          const b = state.bills.find((x) => x.id === id);
+          if (!b) return;
+          state.activeBill = b;
+          el('bmShop').textContent = b.shopName || '';
+          el('bmAmount').textContent = formatMoney(b.totalAmount, b.currency);
+          el('bmDate').textContent = fmtDate(billDateOf(b), true);
+          el('bmTime').textContent = fmtTime12(b.billTime);
+          el('bmUploaded').textContent = fmtDate(normalizeDateToISO(b.uploadedDate), true);
+          el('bmReason').value = b.spendingReason || '';
+          if (b.imageUrl) { el('bmImage').src = b.imageUrl; el('bmImage').classList.remove('hidden'); el('bmOpenPhoto').href = b.imageUrl; el('bmOpenPhoto').classList.remove('hidden'); }
+          else { el('bmImage').classList.add('hidden'); el('bmOpenPhoto').classList.add('hidden'); }
+          el('bmConfirm').classList.add('hidden');
+          bmNote('');
+          el('billModal').classList.remove('hidden');
+        }
+        function closeBill() { el('billModal').classList.add('hidden'); state.activeBill = null; }
+
+        el('bmClose').onclick = closeBill;
+        el('billModal').addEventListener('click', (e) => { if (e.target === el('billModal')) closeBill(); });
+
+        el('bmSaveReason').onclick = async () => {
+          const b = state.activeBill; if (!b) return;
+          const reason = el('bmReason').value.trim();
+          if (!reason) { bmNote('Please enter a reason.'); return; }
+          el('bmSaveReason').disabled = true;
+          try {
+            const data = await callAppsScriptPost({ action: 'updateReason', id: b.id, spendingReason: reason });
+            b.spendingReason = (data.bill && data.bill.spendingReason) || reason;
+            bmNote('Reason updated.');
+            renderTracking();
+          } catch (err) { bmNote(err.message || 'Could not update.'); }
+          finally { el('bmSaveReason').disabled = false; }
+        };
+
+        el('bmDelete').onclick = () => el('bmConfirm').classList.remove('hidden');
+        el('bmConfirmNo').onclick = () => el('bmConfirm').classList.add('hidden');
+        el('bmConfirmYes').onclick = async () => {
+          const b = state.activeBill; if (!b) return;
+          el('bmConfirmYes').disabled = true;
+          try {
+            await callAppsScriptPost({ action: 'deleteBill', id: b.id });
+            state.bills = state.bills.filter((x) => x.id !== b.id);
+            closeBill();
+            renderTracking();
+          } catch (err) { el('bmConfirm').classList.add('hidden'); bmNote(err.message || 'Could not delete.'); }
+          finally { el('bmConfirmYes').disabled = false; }
+        };
+
+        el('bmDownload').onclick = () => {
+          const b = state.activeBill; if (!b) return;
+          const blob = new Blob([billText(b)], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'bill-' + billDateOf(b) + '-' + String(b.shopName || 'bill').replace(/[^\w\-]+/g, '_').slice(0, 24) + '.txt';
+          document.body.appendChild(a); a.click(); a.remove();
+          URL.revokeObjectURL(url);
+          bmNote('Bill details downloaded.');
+        };
+
+        el('bmShare').onclick = async () => {
+          const b = state.activeBill; if (!b) return;
+          const text = billText(b);
+          try {
+            if (navigator.share) { await navigator.share({ title: 'Bill: ' + (b.shopName || ''), text }); return; }
+          } catch (err) { if (err && err.name === 'AbortError') return; }
+          try { await navigator.clipboard.writeText(text); bmNote('Bill details copied. Paste them into any app or website.'); }
+          catch (err) { bmNote('Sharing is not supported on this device.'); }
+        };
+
+        /* ---------- Google Sheet export ---------- */
+        function billsRows() {
+          const head = ['Shop Name', 'Bill Date', 'Bill Time', 'Uploaded Date', 'Spending Reason', 'Currency', 'Total Amount', 'Photo Link'];
+          const rows = state.bills.map((b) => [b.shopName, billDateOf(b), normalizeTime(b.billTime), normalizeDateToISO(b.uploadedDate), b.spendingReason, b.currency, Number(b.totalAmount || 0).toFixed(2), b.imageUrl || '']);
+          return [head].concat(rows);
+        }
+        function sheetNote(t) { const m = el('sheetMsg'); m.textContent = t; m.classList.remove('hidden'); }
+        el('sheetCsvBtn').onclick = () => {
+          if (!state.bills.length) { sheetNote('You have no bills yet.'); return; }
+          const csv = billsRows().map((r) => r.map((c) => '"' + String(c == null ? '' : c).replaceAll('"', '""') + '"').join(',')).join('\n');
+          const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'billtrack-' + todayString() + '.csv';
+          document.body.appendChild(a); a.click(); a.remove();
+          URL.revokeObjectURL(url);
+          sheetNote('CSV downloaded. In Google Sheets use File → Import → Upload.');
+        };
+        el('sheetCopyBtn').onclick = async () => {
+          if (!state.bills.length) { sheetNote('You have no bills yet.'); return; }
+          const tsv = billsRows().map((r) => r.map((c) => String(c == null ? '' : c).replace(/[\t\n]+/g, ' ')).join('\t')).join('\n');
+          try { await navigator.clipboard.writeText(tsv); sheetNote('Copied. Open a Google Sheet and paste (Ctrl+V).'); }
+          catch (e) { sheetNote('Could not copy. Please use Download CSV.'); }
+        };
+        el('sheetOpenBtn').onclick = () => { if (MASTER_SHEET_URL) window.open(MASTER_SHEET_URL, '_blank', 'noopener'); };
+
+        /* ---------- navigation ---------- */
+        function setSidebar(open) {
+          el('sidebar').classList.toggle('-translate-x-full', !open);
+          el('sidebarBackdrop').classList.toggle('hidden', !open);
+        }
+        function setView(v) {
+          state.view = v;
+          ['upload', 'tracking', 'sheet'].forEach((n) => {
+            el('view' + n.charAt(0).toUpperCase() + n.slice(1)).classList.toggle('hidden', n !== v);
+          });
+          document.querySelectorAll('.navItem').forEach((b) => {
+            const on = b.dataset.view === v;
+            b.className = 'navItem flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors ' +
+              (on ? 'bg-[#FACC15] text-[#22103F]' : 'text-[#DDD6FE] hover:bg-[#381C66]');
+          });
+          setSidebar(false);
+          window.scrollTo({ top: 0 });
+          if (v === 'tracking') renderTracking();
+          if (v === 'sheet') el('sheetMsg').classList.add('hidden');
+        }
+        document.addEventListener('click', (e) => {
+          const nav = e.target.closest('[data-view]');
+          if (nav) { setView(nav.dataset.view); return; }
+          const tg = e.target.closest('[data-toggle]');
+          if (tg) {
+            state.openGroups[tg.dataset.toggle] = !tg.nextElementSibling; // திறந்திருந்தா மூடு, மூடியிருந்தா திற
+            renderTracking();
+            return;
+          }
+          const bill = e.target.closest('[data-bill]');
+          if (bill) openBill(bill.dataset.bill);
+        });
+        document.querySelectorAll('.trackTab').forEach((t) => { t.onclick = () => { state.trackMode = t.dataset.mode; renderTracking(); }; });
+        el('menuBtn').onclick = () => setSidebar(true);
+        el('sidebarBackdrop').onclick = () => setSidebar(false);
+        el('refreshBillsBtn').onclick = loadBills;
+        el('signOutBtn').onclick = forceSignOut;
+
+        async function startCamera() {
+          el('cameraErrorText').classList.add('hidden');
+          el('snapCameraBtn').disabled = true;
+          stopCamera();
+
+          if (!window.isSecureContext) {
+            el('cameraErrorText').textContent = 'Live camera requires HTTPS. Tap "Device Camera" below or host on HTTPS.';
+            el('cameraErrorText').classList.remove('hidden');
+            return;
+          }
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            el('cameraErrorText').textContent = 'Live camera preview unavailable. Tap "Device Camera" below.';
+            el('cameraErrorText').classList.remove('hidden');
+            return;
+          }
+          try {
+            let stream;
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: state.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+            } catch (e1) {
+              try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: state.facingMode } }, audio: false });
+              } catch (e2) {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+              }
+            }
+            state.cameraStream = stream;
+            const video = el('cameraVideo');
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+              video.play().catch(() => {});
+              el('snapCameraBtn').disabled = false;
+            };
+          } catch (err) {
+            const name = err && err.name ? err.name : '';
+            let msg = 'Could not access camera. Tap "Device Camera" or upload from gallery.';
+            if (name === 'NotAllowedError') msg = 'Camera permission denied. Allow permission or tap "Device Camera".';
+            else if (name === 'NotFoundError') msg = 'No camera detected. Tap "Device Camera" or upload from gallery.';
+            else if (name === 'NotReadableError') msg = 'Camera is in use by another app.';
+            el('cameraErrorText').textContent = msg;
+            el('cameraErrorText').classList.remove('hidden');
+          }
+        }
+
+        function stopCamera() {
+          if (state.cameraStream) {
+            state.cameraStream.getTracks().forEach((t) => t.stop());
+            state.cameraStream = null;
+          }
+        }
+
+
+
+        el('chooseGalleryBtn').onclick = () => el('fileInput').click();
+        el('chooseAnotherBtn').onclick = () => el('fileInput').click();
+        el('deviceCameraBtn').onclick = () => el('nativeCameraInput').click();
+        el('resetBtn').onclick = resetForm;
+        el('dismissNoticeBtn').onclick = () => el('savedNotice').classList.add('hidden');
+        el('retryScanBtn').onclick = () => state.previewUrl && processAndScan(state.previewUrl);
+        el('openCameraBtn').onclick = () => { el('cameraModal').classList.remove('hidden'); startCamera(); };
+        el('retakePhotoBtn').onclick = () => { el('cameraModal').classList.remove('hidden'); startCamera(); };
+        el('closeCameraBtn').onclick = () => { stopCamera(); el('cameraModal').classList.add('hidden'); };
+        el('cancelCameraBtn').onclick = () => { stopCamera(); el('cameraModal').classList.add('hidden'); };
+        el('switchCameraBtn').onclick = () => { state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment'; startCamera(); };
+        el('billTime').addEventListener('input', () => setTimeNote(false));
+
+        el('snapCameraBtn').onclick = () => {
+          const video = el('cameraVideo');
+          if (!video || !video.videoWidth) return;
+          const w0 = video.videoWidth, h0 = video.videoHeight;
+          const shortSide = Math.min(w0, h0), longSide = Math.max(w0, h0);
+          let scale = 1;
+          if (shortSide > 1150) scale = 1150 / shortSide;
+          if (longSide * scale > 2200) scale = 2200 / longSide;
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(w0 * scale));
+          canvas.height = Math.max(1, Math.round(h0 * scale));
+          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+          stopCamera();
+          el('cameraModal').classList.add('hidden');
+          processAndScan(dataUrl);
+        };
+
+        el('fileInput').onchange = (e) => { const file = e.target.files && e.target.files[0]; if (file) processAndScan(file); e.target.value = ''; };
+        el('nativeCameraInput').onchange = (e) => {
+          const file = e.target.files && e.target.files[0];
+          e.target.value = '';
+          if (file) { stopCamera(); el('cameraModal').classList.add('hidden'); processAndScan(file); }
+        };
+
+        el('dropZone').ondragover = (e) => e.preventDefault();
+        el('dropZone').ondrop = (e) => {
+          e.preventDefault();
+          const file = e.dataTransfer.files && e.dataTransfer.files[0];
+          if (file && file.type.startsWith('image/')) processAndScan(file);
+        };
+
+
+
+        el('billForm').onsubmit = async (e) => {
+          e.preventDefault();
+          const shopName = el('shopName').value.trim();
+          const totalAmount = el('totalAmount').value.trim();
+          const spendingReason = el('spendingReason').value.trim();
+          const errEl = el('saveErrorText');
+          const helpEl = el('saveHelperText');
+          errEl.classList.add('hidden');
+          helpEl.classList.remove('hidden');
+
+          if (!shopName) { errEl.textContent = 'Please enter or verify the Shop / Company Name.'; errEl.classList.remove('hidden'); helpEl.classList.add('hidden'); return; }
+          if (!totalAmount || Number.isNaN(Number(totalAmount)) || Number(totalAmount) < 0) { errEl.textContent = 'Please enter a valid Total Amount.'; errEl.classList.remove('hidden'); helpEl.classList.add('hidden'); return; }
+          if (!spendingReason) { errEl.textContent = 'Please enter your Spending Reason before saving.'; errEl.classList.remove('hidden'); helpEl.classList.add('hidden'); return; }
+
+          el('submitBtn').disabled = true;
+          el('submitBtn').textContent = 'Submitting...';
+          try {
+            const currency = el('currency').value || '₹';
+            const data = await callAppsScriptPost({
+              action: 'saveBill',
+              shopName,
+              billDate: el('billDate').value.trim() || todayString(),
+              billTime: normalizeTime(el('billTime').value) || istParts().time,
+              uploadedDate: el('uploadedDate').value || todayString(),
+              totalAmount: Number(totalAmount),
+              currency,
+              spendingReason,
+              imageData: state.previewUrl,
+              mimeType: state.imageMimeType,
+            });
+            if (data.bill) { state.bills.unshift(data.bill); renderTracking(); }
+            resetForm();
+            el('savedNoticeText').textContent = shopName + ' · ' + formatMoney(totalAmount, currency) + ' saved to your bills.';
+            el('savedNotice').classList.remove('hidden');
+            el('savedNotice').classList.add('flex');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch (err) {
+            errEl.textContent = err.message || 'Unable to save bill.';
+            errEl.classList.remove('hidden');
+            helpEl.classList.add('hidden');
+          } finally {
+            el('submitBtn').disabled = false;
+            el('submitBtn').textContent = 'Submit & Save Bill';
+          }
+        };
+
+
+        /* ---------- welcome / email sign-in ---------- */
+        let pendingEmail = '';
+        let pendingName = '';
+        let resendTimer = null;
+
+        function authMsg(text, kind) {
+          const m = el('authMsg');
+          if (!text) { m.classList.add('hidden'); return; }
+          m.textContent = text;
+          m.className = 'mt-4 rounded-lg px-3 py-2 text-sm ' + (kind === 'info' ? 'bg-[#F3E8FF] text-[#5B21B6]' : 'bg-[#FEF2F2] text-[#B91C1C]');
+        }
+        function authShow(step) {
+          el('authOverlay').style.display = 'block';
+          document.body.style.overflow = 'hidden';
+          el('authEmailForm').style.display = step === 'email' ? 'block' : 'none';
+          el('authCodeForm').style.display = step === 'code' ? 'block' : 'none';
+          el('authTitle').textContent = step === 'email' ? 'Sign in to BillTrack' : 'Enter your code';
+          el('authSub').textContent = step === 'email'
+            ? 'Enter your name and email. We will send you a 6-digit sign-in code.'
+            : 'We sent a 6-digit code to ' + pendingEmail + '. It is valid for 10 minutes.';
+          setTimeout(() => el(step === 'email' ? 'authName' : 'authCode').focus(), 50);
+        }
+        function startResendCooldown() {
+          let left = 45;
+          const btn = el('authResendBtn');
+          btn.disabled = true;
+          clearInterval(resendTimer);
+          btn.textContent = 'Resend code (' + left + 's)';
+          resendTimer = setInterval(() => {
+            left -= 1;
+            if (left <= 0) { clearInterval(resendTimer); btn.disabled = false; btn.textContent = 'Resend code'; }
+            else btn.textContent = 'Resend code (' + left + 's)';
+          }, 1000);
+        }
+        async function sendCode(email, isResend) {
+          const btn = el('authSendBtn');
+          btn.disabled = true;
+          btn.textContent = 'Sending...';
+          authMsg('');
+          try {
+            await callAppsScriptPost({ action: 'requestOtp', email }, 30000);
+            pendingEmail = email;
+            authShow('code');
+            el('authCode').value = '';
+            startResendCooldown();
+            if (isResend) authMsg('A new code has been sent.', 'info');
+          } catch (err) {
+            authMsg(err.message || 'Could not send the code. Please try again.');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = 'Send sign-in code';
+          }
+        }
+        el('authEmailForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = el('authName').value.trim();
+          const email = el('authEmail').value.trim().toLowerCase();
+          if (name.length < 2) { authMsg('Please enter your name.'); return; }
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { authMsg('Please enter a valid email address.'); return; }
+          pendingName = name;
+          sendCode(email, false);
+        });
+        el('authCodeForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const code = el('authCode').value.replace(/\D/g, '');
+          if (code.length !== 6) { authMsg('Please enter the 6-digit code.'); return; }
+          const btn = el('authVerifyBtn');
+          btn.disabled = true;
+          btn.textContent = 'Verifying...';
+          authMsg('');
+          try {
+            const data = await callAppsScriptPost({ action: 'verifyOtp', email: pendingEmail, code, name: pendingName }, 30000);
+            saveSession({ token: data.token, email: data.email, name: data.name || pendingName, expiresAt: data.expiresAt });
+            location.reload();
+          } catch (err) {
+            authMsg(err.message || 'Could not verify the code.');
+            btn.disabled = false;
+            btn.textContent = 'Verify & sign in';
+          }
+        });
+        el('authCode').addEventListener('input', () => { el('authCode').value = el('authCode').value.replace(/\D/g, '').slice(0, 6); });
+        el('authBackBtn').onclick = () => { clearInterval(resendTimer); authMsg(''); authShow('email'); };
+        el('authResendBtn').onclick = () => sendCode(pendingEmail, true);
+
+        /* ---------- start ---------- */
+        function showApp() {
+          el('authOverlay').style.display = 'none';
+          document.body.style.overflow = '';
+          el('appShell').style.display = 'block';
+          const nm = (session.name || session.email.split('@')[0] || 'User');
+          el('userName').textContent = nm;
+          el('userEmail').textContent = session.email;
+          el('userInitial').textContent = nm.trim().charAt(0).toUpperCase();
+          if (ADMIN_EMAIL && MASTER_SHEET_URL && session.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) el('sheetAdminCard').classList.remove('hidden');
+        }
+        renderQuickReasons('');
+        if (session && session.token) {
+          showApp();
+          setView('upload');
+          loadBills();
+        } else {
+          authShow('email');
+        }
+
+      })();
+    </script>
+  </body>
+</html>
