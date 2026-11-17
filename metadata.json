@@ -1,0 +1,10 @@
+{
+  "name": "Remix BillTrack",
+  "description": "Smart bill and receipt tracker that automatically scans uploaded or captured bills for shop name, bill date, and total amount, paired with a spending reason dashboard.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
